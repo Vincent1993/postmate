@@ -1,6 +1,6 @@
 /**
   postmate - A powerful, simple, promise-based postMessage library
-  @version v1.5.0
+  @version v1.6.0
   @link https://github.com/dollarshaveclub/postmate
   @author Jacob Kelley <jakie8@gmail.com>
   @license MIT
@@ -8,8 +8,8 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  global.Postmate = factory();
-}(typeof self !== 'undefined' ? self : this, function () { 'use strict';
+  (global = global || self, global.Postmate = factory());
+}(this, (function () { 'use strict';
 
   /**
    * The type of messages our frames our sending
@@ -134,7 +134,9 @@
           }
 
           if (name in _this.events) {
-            _this.events[name].call(_this, data);
+            _this.events[name].forEach(function (callback) {
+              callback.call(_this, data);
+            });
           }
         }
       };
@@ -187,7 +189,11 @@
     };
 
     _proto.on = function on(eventName, callback) {
-      this.events[eventName] = callback;
+      if (!this.events[eventName]) {
+        this.events[eventName] = [];
+      }
+
+      this.events[eventName].push(callback);
     };
 
     _proto.destroy = function destroy() {
@@ -236,7 +242,7 @@
 
         if (e.data.postmate === 'call') {
           if (property in _this3.model && typeof _this3.model[property] === 'function') {
-            _this3.model[property].call(_this3, data);
+            _this3.model[property](data);
           }
 
           return;
@@ -295,11 +301,13 @@
           container = _ref2$container === void 0 ? typeof container !== 'undefined' ? container : document.body : _ref2$container,
           model = _ref2.model,
           url = _ref2.url,
+          name = _ref2.name,
           _ref2$classListArray = _ref2.classListArray,
           classListArray = _ref2$classListArray === void 0 ? [] : _ref2$classListArray;
       // eslint-disable-line no-undef
       this.parent = window;
       this.frame = document.createElement('iframe');
+      this.frame.name = name || '';
       this.frame.classList.add.apply(this.frame.classList, classListArray);
       container.appendChild(this.frame);
       this.child = this.frame.contentWindow || this.frame.contentDocument.parentWindow;
@@ -382,7 +390,7 @@
         if (_this4.frame.attachEvent) {
           _this4.frame.attachEvent('onload', loaded);
         } else {
-          _this4.frame.onload = loaded;
+          _this4.frame.addEventListener('load', loaded);
         }
 
         {
@@ -492,4 +500,4 @@
 
   return Postmate;
 
-}));
+})));
